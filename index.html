@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONYX — Sistema de Gestión</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #181818;
+    --bg3: #222;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --muted: #888;
+    --hint: #555;
+    --accent: #c8f04a;
+    --accent2: #a8d03a;
+    --red: #ff5a5a;
+    --amber: #f5a623;
+    --green: #4caf6e;
+    --blue: #5aacff;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  /* Layout */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px; min-width: 220px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    z-index: 10;
+  }
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .logo-sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.5px; }
+  .nav { padding: 12px 10px; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: var(--radius);
+    cursor: pointer; color: var(--muted);
+    font-size: 13px; font-weight: 400;
+    transition: all 0.15s; margin-bottom: 2px;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--bg3); color: var(--accent); font-weight: 500; }
+  .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+  .nav-section { font-size: 10px; color: var(--hint); letter-spacing: 1px; text-transform: uppercase; padding: 14px 12px 4px; }
+
+  .main { margin-left: 220px; padding: 32px; flex: 1; min-width: 0; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Header */
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-size: 22px; font-weight: 600; color: var(--text); }
+  .page-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .metric {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+  .metric .m-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .metric .m-val { font-size: 22px; font-weight: 600; color: var(--text); }
+  .metric .m-sub { font-size: 11px; color: var(--hint); margin-top: 3px; }
+  .metric.danger .m-val { color: var(--red); }
+  .metric.success .m-val { color: var(--green); }
+  .metric.warn .m-val { color: var(--amber); }
+  .metric.accent .m-val { color: var(--accent); }
+
+  /* Tables */
+  .table-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .table-head {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; font-weight: 500; color: var(--muted);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-size: 11px; font-weight: 500;
+    color: var(--hint); text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 500;
+    padding: 3px 9px; border-radius: 20px;
+  }
+  .badge.red { background: rgba(255,90,90,0.12); color: var(--red); }
+  .badge.green { background: rgba(76,175,110,0.12); color: var(--green); }
+  .badge.amber { background: rgba(245,166,35,0.12); color: var(--amber); }
+  .badge.blue { background: rgba(90,172,255,0.12); color: var(--blue); }
+  .badge.gray { background: var(--bg3); color: var(--muted); }
+
+  /* Avatar */
+  .avatar {
+    width: 32px; height: 32px; min-width: 32px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+  }
+  .av-g { background: rgba(200,240,74,0.12); color: var(--accent); }
+  .av-b { background: rgba(90,172,255,0.12); color: var(--blue); }
+  .av-r { background: rgba(255,90,90,0.12); color: var(--red); }
+  .row-flex { display: flex; align-items: center; gap: 10px; }
+  .name-col .name { font-size: 13px; font-weight: 500; }
+  .name-col .sub { font-size: 11px; color: var(--muted); }
+
+  /* Model pill */
+  .model { font-size: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; color: var(--text); font-family: 'DM Mono', monospace; }
+  .imei { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--hint); }
+
+  /* Alert */
+  .alert {
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    border: 1px solid;
+  }
+  .alert.warn { background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.2); color: var(--amber); }
+  .alert.info { background: rgba(90,172,255,0.08); border-color: rgba(90,172,255,0.2); color: var(--blue); }
+
+  /* Two column grid */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+  /* Section label */
+  .slabel { font-size: 10px; color: var(--hint); letter-spacing: 1px; text-transform: uppercase; margin: 20px 0 10px; }
+
+  /* Dep tags */
+  .dep { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .dep-stk { background: rgba(76,175,110,0.12); color: var(--green); }
+  .dep-sc { background: rgba(245,166,35,0.12); color: var(--amber); }
+  .dep-rep { background: rgba(255,90,90,0.12); color: var(--red); }
+  .dep-ing { background: rgba(90,172,255,0.12); color: var(--blue); }
+  .dep-elias { background: rgba(200,240,74,0.12); color: var(--accent); }
+
+  /* Progress bar */
+  .bar { height: 4px; border-radius: 2px; background: var(--bg3); overflow: hidden; width: 80px; }
+  .bar-fill { height: 100%; border-radius: 2px; }
+
+  /* Scrollable table wrapper */
+  .scroll-x { overflow-x: auto; }
+
+  /* Responsive */
+  @media(max-width: 700px) {
+    .sidebar { width: 0; display: none; }
+    .main { margin-left: 0; padding: 16px; }
+    .two-col { grid-template-columns: 1fr; }
+    .mobile-nav {
+      display: flex; overflow-x: auto; gap: 6px;
+      padding: 12px 16px; background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .mobile-nav button {
+      white-space: nowrap; font-size: 12px;
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--bg3);
+      color: var(--muted); cursor: pointer;
+    }
+    .mobile-nav button.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  }
+  @media(min-width: 701px) { .mobile-nav { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- Mobile nav -->
+<div class="mobile-nav">
+  <button class="active" onclick="show('dashboard',this)">Dashboard</button>
+  <button onclick="show('stock',this)">Stock</button>
+  <button onclick="show('ventas',this)">Ventas</button>
+  <button onclick="show('proveedores',this)">Proveedores</button>
+  <button onclick="show('clientes',this)">Clientes</button>
+  <button onclick="show('tarjetas',this)">Financiación</button>
+  <button onclick="show('reparaciones',this)">Reparaciones</button>
+  <button onclick="show('finanzas',this)">Finanzas</button>
+</div>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">ONYX</div>
+      <div class="logo-sub">SISTEMA DE GESTIÓN · 2026</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">General</div>
+      <button class="nav-item active" onclick="show('dashboard',this)"><span class="icon">◈</span> Dashboard</button>
+      <button class="nav-item" onclick="show('stock',this)"><span class="icon">▦</span> Stock</button>
+      <button class="nav-item" onclick="show('ventas',this)"><span class="icon">↗</span> Ventas</button>
+      <div class="nav-section">Contactos</div>
+      <button class="nav-item" onclick="show('proveedores',this)"><span class="icon">⬡</span> Proveedores</button>
+      <button class="nav-item" onclick="show('clientes',this)"><span class="icon">◯</span> Clientes</button>
+      <div class="nav-section">Operaciones</div>
+      <button class="nav-item" onclick="show('tarjetas',this)"><span class="icon">▣</span> Financiación</button>
+      <button class="nav-item" onclick="show('reparaciones',this)"><span class="icon">⚙</span> Reparaciones</button>
+      <button class="nav-item" onclick="show('finanzas',this)"><span class="icon">≋</span> Finanzas</button>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="page active">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Resumen general · Mayo 2026 · Rosario</div>
+      </div>
+      <div class="cards">
+        <div class="metric"><div class="m-label">Disponibilidades</div><div class="m-val">$11,476</div><div class="m-sub">Cajas y bancos</div></div>
+        <div class="metric accent"><div class="m-label">Stock</div><div class="m-val">$14,480</div><div class="m-sub">iPhones + accesorios</div></div>
+        <div class="metric warn"><div class="m-label">Por cobrar</div><div class="m-val">$1,378</div><div class="m-sub">Clientes con deuda</div></div>
+        <div class="metric danger"><div class="m-label">Por pagar</div><div class="m-val">$39,813</div><div class="m-sub">Proveedores + otros</div></div>
+        <div class="metric success"><div class="m-label">Ganancia</div><div class="m-val">$1,082</div><div class="m-sub">Ventas realizadas</div></div>
+        <div class="metric danger"><div class="m-label">Patrimonio neto</div><div class="m-val">-$12,479</div><div class="m-sub">Capital neto</div></div>
+      </div>
+
+      <div class="alert warn">⚠ Deuda urgente: iROYAL ($25,238) + Mati Usados ($14,385) · Total proveedores: $39,623</div>
+      <div class="alert info">3 operaciones de tarjeta sin cobrar: Ferraris, Flor-Sol, Trilce</div>
+
+      <div class="two-col">
+        <div class="table-wrap">
+          <div class="table-head">Cajas y bancos</div>
+          <table>
+            <tr><th>Cuenta</th><th style="text-align:right">Saldo USD</th></tr>
+            <tr><td>BBVA USD</td><td style="text-align:right;font-weight:600;">$2,000</td></tr>
+            <tr><td>USDT Binance</td><td style="text-align:right;">$25</td></tr>
+            <tr><td>Román</td><td style="text-align:right;">$9,451</td></tr>
+            <tr><td style="color:var(--hint)">USD Cash / otras</td><td style="text-align:right;color:var(--hint)">$0</td></tr>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <div class="table-head">Gastos presupuestados</div>
+          <table>
+            <tr><th>Concepto</th><th style="text-align:right">USD</th></tr>
+            <tr><td>Sueldo Nico</td><td style="text-align:right">$3,800</td></tr>
+            <tr><td>Publicidad</td><td style="text-align:right">$450</td></tr>
+            <tr><td>Alquiler</td><td style="text-align:right">$250</td></tr>
+            <tr><td>Cadete</td><td style="text-align:right">$100</td></tr>
+            <tr><td>Zamponi</td><td style="text-align:right">$100</td></tr>
+            <tr><td>Cochera</td><td style="text-align:right">$60</td></tr>
+            <tr><td>Monotributo</td><td style="text-align:right">$50</td></tr>
+            <tr><td>Expensas</td><td style="text-align:right">$50</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK -->
+    <div id="stock" class="page">
+      <div class="page-header">
+        <div class="page-title">Stock</div>
+        <div class="page-sub">Equipos disponibles, en reparación y con técnicos</div>
+      </div>
+      <div class="slabel">iPhone en stock (STK)</div>
+      <div class="table-wrap">
+        <div class="scroll-x">
+        <table>
+          <tr><th>Modelo</th><th>IMEI</th><th>Color</th><th>Bat</th><th>Prov.</th><th style="text-align:right">Costo</th><th style="text-align:right">Precio</th></tr>
+          <tr><td><span class="model">13 PRO 128</span></td><td class="imei">...284680</td><td>Green</td><td>87%</td><td>Mati Usados</td><td style="text-align:right">$400</td><td style="text-align:right;color:var(--accent);font-weight:600;">$470</td></tr>
+          <tr><td><span class="model">13 PRO 128</span></td><td class="imei">...300130</td><td>Green</td><td>90%</td><td>Mati Usados</td><td style="text-align:right">$400</td><td style="text-align:right;color:var(--accent);font-weight:600;">$470</td></tr>
+          <tr><td><span class="model">13 PRO 128</span></td><td class="imei">...777514</td><td>Sierra Blue</td><td>90%</td><td>Mati Usados</td><td style="text-align:right">$400</td><td style="text-align:right;color:var(--accent);font-weight:600;">$470</td></tr>
+          <tr><td><span class="model">14 128</span></td><td class="imei">...624825</td><td>Blue</td><td>90%</td><td>Mati Usados</td><td style="text-align:right">$335</td><td style="text-align:right;color:var(--accent);font-weight:600;">$405</td></tr>
+          <tr><td><span class="model">14 PRO 128</span></td><td class="imei">...687236</td><td>Space Black</td><td>88%</td><td>Mati Usados</td><td style="text-align:right">$460</td><td style="text-align:right;color:var(--accent);font-weight:600;">$530</td></tr>
+          <tr><td><span class="model">14 PRO 128</span></td><td class="imei">—</td><td>Deep Purple</td><td>86%</td><td>Mati Usados</td><td style="text-align:right">$460</td><td style="text-align:right;color:var(--accent);font-weight:600;">$530</td></tr>
+          <tr><td><span class="model">14 PRO 128</span></td><td class="imei">...744235</td><td>Black</td><td>87%</td><td>Mati Usados</td><td style="text-align:right">$460</td><td style="text-align:right;color:var(--accent);font-weight:600;">$530</td></tr>
+          <tr><td><span class="model">15 128</span></td><td class="imei">...748271</td><td>Pink</td><td>88%</td><td>Mati Usados</td><td style="text-align:right">$450</td><td style="text-align:right;color:var(--accent);font-weight:600;">$520</td></tr>
+          <tr><td><span class="model">15 128</span></td><td class="imei">...794341</td><td>Black</td><td>88%</td><td>Mati Usados</td><td style="text-align:right">$455</td><td style="text-align:right;color:var(--accent);font-weight:600;">$525</td></tr>
+          <tr><td><span class="model">15 128</span></td><td class="imei">...862581</td><td>Black</td><td>89%</td><td>Mati Usados</td><td style="text-align:right">$450</td><td style="text-align:right;color:var(--accent);font-weight:600;">$520</td></tr>
+          <tr><td><span class="model">15 128</span></td><td class="imei">...661522</td><td>Blue</td><td>100%</td><td>Maria Luz</td><td style="text-align:right">$520</td><td style="text-align:right;color:var(--accent);font-weight:600;">$590</td></tr>
+          <tr><td><span class="model">15 PRO 256</span></td><td class="imei">...249601</td><td>Black</td><td>89%</td><td>Mati Usados</td><td style="text-align:right">$590</td><td style="text-align:right;color:var(--accent);font-weight:600;">$660</td></tr>
+          <tr><td><span class="model">15 PM 256</span></td><td class="imei">...205604</td><td>Black</td><td>91%</td><td>Mati Usados</td><td style="text-align:right">$680</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">16 128</span></td><td class="imei">...537400</td><td>Black</td><td>100%</td><td>Mati Usados</td><td style="text-align:right">$610</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">16 128</span></td><td class="imei">...537400</td><td>Pink</td><td>100%</td><td>Mati Usados</td><td style="text-align:right">$610</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">16 128</span></td><td class="imei">...741103</td><td>Black</td><td>99%</td><td>Mati Usados</td><td style="text-align:right">$610</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">16 PM 256</span></td><td class="imei">51520</td><td>Black</td><td>96%</td><td>Mati Usados</td><td style="text-align:right">$900</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">17 PRO 256</span></td><td class="imei">—</td><td>Blue</td><td>100%</td><td>Mati Usados</td><td style="text-align:right">$1,130</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">11 64</span></td><td class="imei">Suegra</td><td>White</td><td>100%</td><td>Varios</td><td style="text-align:right">$126</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">11 PM 256</span></td><td class="imei">82955</td><td>White</td><td>100%</td><td>Ema Alvarez</td><td style="text-align:right">$555</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">13 128</span></td><td class="imei">...448710</td><td>Midnight</td><td>100%</td><td>Sol Díaz</td><td style="text-align:right">$315</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+          <tr><td><span class="model">MAC NEO 8/512</span></td><td class="imei">—</td><td>Silver</td><td>NEW</td><td>Mati Nuevos</td><td style="text-align:right">$875</td><td style="text-align:right;color:var(--hint)">—</td></tr>
+        </table>
+        </div>
+      </div>
+
+      <div class="slabel">En reparación / técnicos externos</div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Modelo</th><th>IMEI</th><th>Depósito</th><th>Proveedor</th><th style="text-align:right">Costo</th></tr>
+          <tr><td><span class="model">14 128</span></td><td class="imei">...671408</td><td><span class="dep dep-ing">Ingreso</span></td><td>Chicholino</td><td style="text-align:right">$380</td></tr>
+          <tr><td><span class="model">13 PM 128</span></td><td class="imei">...945640</td><td><span class="dep dep-ing">Ingreso</span></td><td>Pau Segalerba</td><td style="text-align:right">$465</td></tr>
+          <tr><td><span class="model">16 PM 256</span></td><td class="imei">...328015</td><td><span class="dep dep-rep">Reparación</span></td><td>Brian Ezequiel</td><td style="text-align:right">$900</td></tr>
+          <tr><td><span class="model">13 PRO 256</span></td><td class="imei">...698682</td><td><span class="dep dep-rep">Reparación</span></td><td>Dana Ponce</td><td style="text-align:right">$490</td></tr>
+          <tr><td><span class="model">13 PRO 256</span></td><td class="imei">...749368</td><td><span class="dep dep-elias">Elias</span></td><td>Mica Peloso</td><td style="text-align:right">$440</td></tr>
+          <tr><td><span class="model">13 128</span></td><td class="imei">...399990</td><td><span class="dep dep-elias">Elias</span></td><td>Juan Arburua</td><td style="text-align:right">$300</td></tr>
+          <tr><td><span class="model">15 PM 256</span></td><td class="imei">...948452</td><td><span class="dep dep-elias">Elias</span></td><td>Belu Salguero</td><td style="text-align:right">$700</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- VENTAS -->
+    <div id="ventas" class="page">
+      <div class="page-header">
+        <div class="page-title">Ventas</div>
+        <div class="page-sub">Historial de ventas y ganancia por operación</div>
+      </div>
+      <div class="cards">
+        <div class="metric accent"><div class="m-label">Total vendido</div><div class="m-val">$4,477</div></div>
+        <div class="metric success"><div class="m-label">Ganancia total</div><div class="m-val">$1,082</div></div>
+        <div class="metric warn"><div class="m-label">Deuda clientes</div><div class="m-val">$1,378</div></div>
+        <div class="metric"><div class="m-label">Ventas realizadas</div><div class="m-val">6</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="scroll-x">
+        <table>
+          <tr><th>Fecha</th><th>Modelo</th><th>Cliente</th><th>Vendedor</th><th style="text-align:right">Venta</th><th style="text-align:right">Ganancia</th><th>Estado</th></tr>
+          <tr><td>04/06/25</td><td><span class="model">13 PRO 128</span></td><td>Nati Almacén</td><td>Nico</td><td style="text-align:right">$720</td><td style="text-align:right;color:var(--green);font-weight:600;">$267</td><td><span class="badge amber">Debe $272</span></td></tr>
+          <tr><td>29/08/25</td><td><span class="model">14 PM 128</span></td><td>Tomi - Eliana</td><td>Nico</td><td style="text-align:right">$950</td><td style="text-align:right;color:var(--green);font-weight:600;">$285</td><td><span class="badge amber">Debe $74</span></td></tr>
+          <tr><td>11/12/25</td><td><span class="model">16 PM 256</span></td><td>Eliana</td><td>Nico</td><td style="text-align:right">$1,300</td><td style="text-align:right;color:var(--green);font-weight:600;">$350</td><td><span class="badge amber">Debe $130</span></td></tr>
+          <tr><td>02/03/26</td><td><span class="model">14 128</span></td><td>Dani A</td><td>Nico</td><td style="text-align:right">$350</td><td style="text-align:right;color:var(--green);font-weight:600;">$20</td><td><span class="badge amber">Debe $135</span></td></tr>
+          <tr><td>11/03/26</td><td><span class="model">13 PRO 256</span></td><td>Adrimar</td><td>Nico</td><td style="text-align:right">$500</td><td style="text-align:right;color:var(--green);font-weight:600;">$53</td><td><span class="badge amber">Debe $110</span></td></tr>
+          <tr><td>30/04/26</td><td><span class="model">14 PM 128</span></td><td>Sergio Sottini</td><td>Nico</td><td style="text-align:right">$657</td><td style="text-align:right;color:var(--green);font-weight:600;">$107</td><td><span class="badge red">Debe $657</span></td></tr>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROVEEDORES -->
+    <div id="proveedores" class="page">
+      <div class="page-header">
+        <div class="page-title">Proveedores</div>
+        <div class="page-sub">Estado de cuenta por proveedor</div>
+      </div>
+      <div class="cards">
+        <div class="metric danger"><div class="m-label">Deuda total</div><div class="m-val">$39,623</div></div>
+        <div class="metric warn"><div class="m-label">Con deuda</div><div class="m-val">2</div></div>
+        <div class="metric success"><div class="m-label">Al día</div><div class="m-val">7</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Código</th><th>Proveedor</th><th>Zona</th><th style="text-align:right">Deuda</th><th>Estado</th></tr>
+          <tr><td class="imei">P002</td><td><div class="row-flex"><div class="avatar av-r">iR</div><div class="name-col"><div class="name">iROYAL</div><div class="sub">Rosario</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--red);font-weight:600;">$25,238</td><td><span class="badge red">Urgente</span></td></tr>
+          <tr><td class="imei">P006</td><td><div class="row-flex"><div class="avatar av-r">MU</div><div class="name-col"><div class="name">Mati Usados</div><div class="sub">Bs As</div></div></div></td><td>Bs As</td><td style="text-align:right;color:var(--red);font-weight:600;">$14,385</td><td><span class="badge red">Urgente</span></td></tr>
+          <tr><td class="imei">P001</td><td><div class="row-flex"><div class="avatar av-g">NO</div><div class="name-col"><div class="name">Nico - ONYX</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+          <tr><td class="imei">P003</td><td><div class="row-flex"><div class="avatar av-b">TS</div><div class="name-col"><div class="name">Tecno Store</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+          <tr><td class="imei">P004</td><td><div class="row-flex"><div class="avatar av-b">AP</div><div class="name-col"><div class="name">Ale Pisarz</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+          <tr><td class="imei">P005</td><td><div class="row-flex"><div class="avatar av-b">PD</div><div class="name-col"><div class="name">PDA</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+          <tr><td class="imei">P007</td><td><div class="row-flex"><div class="avatar av-b">MN</div><div class="name-col"><div class="name">Mati Nuevos</div></div></div></td><td>Bs As</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+          <tr><td class="imei">P008</td><td><div class="row-flex"><div class="avatar av-b">LE</div><div class="name-col"><div class="name">Luci Esc</div></div></div></td><td>Carcaraña</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+          <tr><td class="imei">P009</td><td><div class="row-flex"><div class="avatar av-b">RO</div><div class="name-col"><div class="name">Román</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+          <tr><td class="imei">P010</td><td><div class="row-flex"><div class="avatar av-b">CV</div><div class="name-col"><div class="name">Canjes / Varios</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="clientes" class="page">
+      <div class="page-header">
+        <div class="page-title">Clientes</div>
+        <div class="page-sub">Saldos pendientes por cliente</div>
+      </div>
+      <div class="cards">
+        <div class="metric warn"><div class="m-label">Total por cobrar</div><div class="m-val">$1,378</div></div>
+        <div class="metric danger"><div class="m-label">Con deuda</div><div class="m-val">6</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Código</th><th>Cliente</th><th>Zona</th><th style="text-align:right">Deuda</th><th>Estado</th></tr>
+          <tr><td class="imei">C007</td><td><div class="row-flex"><div class="avatar av-r">SS</div><div class="name-col"><div class="name">Sergio Sottini</div><div class="sub">Rosario</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--red);font-weight:600;">$657</td><td><span class="badge red">Urgente</span></td></tr>
+          <tr><td class="imei">C005</td><td><div class="row-flex"><div class="avatar av-b">NA</div><div class="name-col"><div class="name">Nati Almacén</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--amber);font-weight:600;">$272</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td class="imei">C006</td><td><div class="row-flex"><div class="avatar av-b">DA</div><div class="name-col"><div class="name">Dani A</div></div></div></td><td>Villa</td><td style="text-align:right;color:var(--amber);font-weight:600;">$135</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td class="imei">C003</td><td><div class="row-flex"><div class="avatar av-b">EL</div><div class="name-col"><div class="name">Eliana</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--amber);font-weight:600;">$130</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td class="imei">C004</td><td><div class="row-flex"><div class="avatar av-b">AD</div><div class="name-col"><div class="name">Adrimar</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--amber);font-weight:600;">$110</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td class="imei">C002</td><td><div class="row-flex"><div class="avatar av-b">TE</div><div class="name-col"><div class="name">Tomi - Eliana</div></div></div></td><td>Rosario</td><td style="text-align:right;">$74</td><td><span class="badge gray">Bajo</span></td></tr>
+          <tr><td class="imei">C001</td><td><div class="row-flex"><div class="avatar av-g">MI</div><div class="name-col"><div class="name">Minoristas</div></div></div></td><td>Rosario</td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- TARJETAS -->
+    <div id="tarjetas" class="page">
+      <div class="page-header">
+        <div class="page-title">Financiación con tarjeta</div>
+        <div class="page-sub">Operaciones Mar–Abr 2026</div>
+      </div>
+      <div class="alert warn">3 operaciones sin cobrar: Ferraris ($600,000 ARS), Flor-Sol ($1,342,222 ARS), Trilce ($624,960 ARS)</div>
+      <div class="table-wrap">
+        <div class="scroll-x">
+        <table>
+          <tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th style="text-align:right">USD</th><th>Cuotas</th><th>Interés</th><th style="text-align:right">Cobrado ARS</th><th style="text-align:right">Ganancia ARS</th></tr>
+          <tr><td>19/3</td><td>Ger</td><td><span class="model">15 PRO 256</span></td><td style="text-align:right">$510</td><td>12</td><td>60%</td><td style="text-align:right">$797,700</td><td style="text-align:right;color:var(--green)">$58,325</td></tr>
+          <tr><td>23/3</td><td>Agus</td><td><span class="model">MAC Air M4</span></td><td style="text-align:right">$1,200</td><td>6</td><td>30%</td><td style="text-align:right">$1,839,428</td><td style="text-align:right;color:var(--green)">$99,428</td></tr>
+          <tr><td>23/3</td><td>Fabiana</td><td><span class="model">MAC NEO 8/256</span></td><td style="text-align:right">$630</td><td>6</td><td>30%</td><td style="text-align:right">$966,066</td><td style="text-align:right;color:var(--green)">$52,220</td></tr>
+          <tr><td>23/3</td><td>Sabri</td><td><span class="model">17 PRO MAX 256</span></td><td style="text-align:right">$525</td><td>12</td><td>60%</td><td style="text-align:right">$821,310</td><td style="text-align:right;color:var(--green)">$60,060</td></tr>
+          <tr><td>25/3</td><td>Juli Carreras</td><td><span class="model">15 PRO 256</span></td><td style="text-align:right">$50</td><td>3</td><td>20%</td><td style="text-align:right">$76,360</td><td style="text-align:right;color:var(--green)">$3,860</td></tr>
+          <tr><td>25/3</td><td>Carlos</td><td><span class="model">15 PM 256</span></td><td style="text-align:right">$550</td><td>6</td><td>30%</td><td style="text-align:right">$837,257</td><td style="text-align:right;color:var(--green)">$45,257</td></tr>
+          <tr><td>26/3</td><td>Raul Cardozo</td><td><span class="model">17 PRO 256</span></td><td style="text-align:right">$970</td><td>6</td><td>30%</td><td style="text-align:right">$1,459,630</td><td style="text-align:right;color:var(--green)">$53,130</td></tr>
+          <tr><td>31/3</td><td>Karen</td><td><span class="model">17 PM 256</span></td><td style="text-align:right">$1,500</td><td>12</td><td>60%</td><td style="text-align:right">$2,346,601</td><td style="text-align:right;color:var(--green);font-weight:600;">$171,601</td></tr>
+          <tr><td>2/4</td><td>Fabrizio</td><td><span class="model">17 PM 256</span></td><td style="text-align:right">$1,450</td><td>12</td><td>60%</td><td style="text-align:right">$2,268,381</td><td style="text-align:right;color:var(--green);font-weight:600;">$165,881</td></tr>
+          <tr><td>7/4</td><td>Bel Pavon</td><td><span class="model">17 256 + 13 128</span></td><td style="text-align:right">$1,380</td><td>6–12</td><td>30–60%</td><td style="text-align:right">$2,116,993</td><td style="text-align:right;color:var(--green)">$114,666</td></tr>
+          <tr><td>11/4</td><td>Juli</td><td><span class="model">17 PRO + cargador</span></td><td style="text-align:right">$1,405</td><td>6</td><td>35%</td><td style="text-align:right">$2,197,930</td><td style="text-align:right;color:var(--green)">$195,812</td></tr>
+          <tr><td>17/4</td><td>Juli Ferraris</td><td><span class="model">17 PRO 256</span></td><td style="text-align:right">$420</td><td>3</td><td>25%</td><td style="text-align:right;color:var(--hint)">—</td><td style="text-align:right;color:var(--red)">-$600,000</td></tr>
+          <tr><td>18/4</td><td>Flor - Sol</td><td><span class="model">17 256</span></td><td style="text-align:right">$942</td><td>6</td><td>35%</td><td style="text-align:right;color:var(--hint)">—</td><td style="text-align:right;color:var(--red)">-$1,342,222</td></tr>
+          <tr><td>20/4</td><td>Trilce</td><td><span class="model">16 PM 256</span></td><td style="text-align:right">$437</td><td>3</td><td>25%</td><td style="text-align:right;color:var(--hint)">—</td><td style="text-align:right;color:var(--red)">-$624,960</td></tr>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPARACIONES -->
+    <div id="reparaciones" class="page">
+      <div class="page-header">
+        <div class="page-title">Reparaciones</div>
+        <div class="page-sub">Historial de trabajos técnicos</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Fecha</th><th>Técnico</th><th>Modelo</th><th>IMEI</th><th>Trabajo</th><th style="text-align:right">Costo</th><th>Estado</th></tr>
+          <tr><td>25/03</td><td>Angela</td><td><span class="model">14 128</span></td><td class="imei">...671408</td><td>Pulido</td><td style="text-align:right">$30</td><td><span class="badge green">Entregado 22/04</span></td></tr>
+          <tr><td>03/03</td><td>Angela</td><td><span class="model">13 PM 128</span></td><td class="imei">...945640</td><td>Pulido</td><td style="text-align:right">$30</td><td><span class="badge green">Entregado 22/04</span></td></tr>
+          <tr><td>23/04</td><td>Elias</td><td><span class="model">13 PRO 256</span></td><td class="imei">...749368</td><td>Cámara</td><td style="text-align:right">$0</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td>17/04</td><td>Elias</td><td><span class="model">13 128</span></td><td class="imei">...399990</td><td>No lee chip</td><td style="text-align:right">$0</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td>21/04</td><td>Elias</td><td><span class="model">15 PM 256</span></td><td class="imei">...948452</td><td>Batería</td><td style="text-align:right">$0</td><td><span class="badge amber">Pendiente</span></td></tr>
+        </table>
+      </div>
+      <div class="slabel">Repuestos en stock</div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Repuesto</th><th style="text-align:right">Q</th><th style="text-align:right">Precio</th><th style="text-align:right">Total</th></tr>
+          <tr><td>Chasis iPhone 13</td><td style="text-align:right">1</td><td style="text-align:right">$50</td><td style="text-align:right;font-weight:600;">$50</td></tr>
+          <tr><td>Cámaras iPhone 13</td><td style="text-align:right">1</td><td style="text-align:right">$110</td><td style="text-align:right;font-weight:600;">$110</td></tr>
+          <tr><td>Batería iPhone X</td><td style="text-align:right;color:var(--red)">-1</td><td style="text-align:right">$36</td><td style="text-align:right;color:var(--red)">-$36</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- FINANZAS -->
+    <div id="finanzas" class="page">
+      <div class="page-header">
+        <div class="page-title">Finanzas</div>
+        <div class="page-sub">Balance general y estructura de capital</div>
+      </div>
+      <div class="two-col">
+        <div class="table-wrap">
+          <div class="table-head">Activos</div>
+          <table>
+            <tr><td style="color:var(--muted)">Disponibilidades</td><td style="text-align:right;font-weight:600;">$11,476</td></tr>
+            <tr><td style="color:var(--muted)">Mercadería en stock</td><td style="text-align:right;font-weight:600;">$14,480</td></tr>
+            <tr><td style="color:var(--muted)">Cuentas por cobrar</td><td style="text-align:right;font-weight:600;">$1,378</td></tr>
+            <tr><td style="font-weight:600;color:var(--accent)">Total activos</td><td style="text-align:right;font-weight:600;color:var(--accent)">$27,334</td></tr>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <div class="table-head">Pasivos</div>
+          <table>
+            <tr><td style="color:var(--muted)">Proveedores</td><td style="text-align:right;color:var(--red);font-weight:600;">$39,623</td></tr>
+            <tr><td style="color:var(--muted)">Reparaciones</td><td style="text-align:right;">$60</td></tr>
+            <tr><td style="color:var(--muted)">Comisiones</td><td style="text-align:right;">$130</td></tr>
+            <tr><td style="font-weight:600;color:var(--red)">Total pasivos</td><td style="text-align:right;font-weight:600;color:var(--red)">$39,813</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-bottom:20px">
+        <div class="table-head">Aporte de socios</div>
+        <table>
+          <tr><th>Socio</th><th style="text-align:right">Monto USD</th><th style="text-align:right">%</th></tr>
+          <tr><td>Capital total</td><td style="text-align:right;color:var(--red)">-$13,561.50</td><td style="text-align:right">100%</td></tr>
+          <tr><td>Aporte Nico</td><td style="text-align:right;color:var(--red)">-$18,516.50</td><td style="text-align:right">136.54%</td></tr>
+          <tr><td>Caja iROYAL</td><td style="text-align:right;color:var(--green)">$4,955.00</td><td style="text-align:right">-36.54%</td></tr>
+        </table>
+      </div>
+      <div class="slabel">Comisiones pendientes</div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Nombre</th><th style="text-align:right">Debe</th><th>Estado</th></tr>
+          <tr><td><div class="row-flex"><div class="avatar av-g">LU</div>Luz</div></td><td style="text-align:right;color:var(--amber)">$90</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td><div class="row-flex"><div class="avatar av-g">NO</div>Noel</div></td><td style="text-align:right;color:var(--amber)">$40</td><td><span class="badge amber">Pendiente</span></td></tr>
+          <tr><td><div class="row-flex"><div class="avatar av-b">ZA</div>Zaira</div></td><td style="text-align:right;color:var(--hint)">$0</td><td><span class="badge green">Al día</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .mobile-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  const pair = id === 'dashboard' ? 0 : ['stock','ventas','proveedores','clientes','tarjetas','reparaciones','finanzas'].indexOf(id) + 1;
+  document.querySelectorAll('.nav-item')[pair] && document.querySelectorAll('.nav-item')[pair].classList.add('active');
+}
+</script>
+</body>
+</html>
